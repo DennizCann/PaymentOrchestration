@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Arrays;
 import com.denizcan.paymentorchestration.dto.PaymentRequest;
 import com.denizcan.paymentorchestration.model.PaymentStatus;
 import com.denizcan.paymentorchestration.factory.PaymentProviderFactory;
@@ -58,7 +57,7 @@ public class PaymentService {
         }
         
         // Desteklenen para birimlerini kontrol et
-        List<String> supportedCurrencies = Arrays.asList("TRY", "USD", "EUR");
+        List<String> supportedCurrencies = List.of("TRY", "USD", "EUR");
         if (!supportedCurrencies.contains(payment.getCurrency())) {
             throw new PaymentValidationException("Desteklenmeyen para birimi: " + payment.getCurrency());
         }
