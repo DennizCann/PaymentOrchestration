@@ -175,4 +175,23 @@ public class PaymentService {
                 return paymentRepository.save(payment);
             });
     }
+
+    public Payment refundPayment(String id) {
+        Payment payment = getPaymentById(id);
+        
+        if (payment.getStatus() != PaymentStatus.COMPLETED) {
+            throw new PaymentValidationException(
+                "Sadece tamamlanmış ödemeler iade edilebilir. Mevcut durum: " + payment.getStatus());
+        }
+        
+        PaymentProviderService provider = providerFactory.getProvider(payment.getProvider());
+        boolean success = provider.refundPayment(payment);
+        
+        if (!success) {
+            throw new PaymentValidationException("İade işlemi başarısız oldu");
+        }
+        
+        payment.setStatus(PaymentStatus.REFUNDED);
+        return paymentRepository.save(payment);
+    }
 } 
