@@ -2,6 +2,7 @@ package com.denizcan.paymentorchestration.controller;
 
 import com.denizcan.paymentorchestration.model.Payment;
 import com.denizcan.paymentorchestration.service.PaymentService;
+import com.denizcan.paymentorchestration.dto.PaymentRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -22,8 +24,8 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<Payment> createPayment(@Valid @RequestBody Payment payment) {
-        Payment newPayment = paymentService.createPayment(payment);
+    public ResponseEntity<Payment> createPayment(@Valid @RequestBody PaymentRequest paymentRequest) {
+        Payment newPayment = paymentService.createPayment(paymentRequest);
         return new ResponseEntity<>(newPayment, HttpStatus.CREATED);
     }
 
@@ -42,7 +44,13 @@ public class PaymentController {
     @PutMapping("/{id}")
     public ResponseEntity<Payment> updatePayment(
             @PathVariable String id,
-            @Valid @RequestBody Payment payment) {
+            @Valid @RequestBody PaymentRequest paymentRequest) {
+        Payment payment = Payment.builder()
+            .amount(paymentRequest.getAmount())
+            .currency(paymentRequest.getCurrency())
+            .provider(paymentRequest.getProvider())
+            .description(paymentRequest.getDescription())
+            .build();
         Payment updatedPayment = paymentService.updatePayment(id, payment);
         return ResponseEntity.ok(updatedPayment);
     }
@@ -63,5 +71,18 @@ public class PaymentController {
     public ResponseEntity<Payment> failPayment(@PathVariable String id) {
         Payment payment = paymentService.failPayment(id);
         return ResponseEntity.ok(payment);
+    }
+
+    @PostMapping("/{id}/process")
+    public ResponseEntity<Payment> processPayment(@PathVariable String id) {
+        Payment payment = paymentService.processPayment(id);
+        return ResponseEntity.ok(payment);
+    }
+
+    @PostMapping("/{id}/process-async")
+    public CompletableFuture<ResponseEntity<Payment>> processPaymentAsync(@PathVariable String id) {
+        return paymentService.processPaymentAsynchronously(id)
+            .thenApply(ResponseEntity::ok)
+            .exceptionally(ex -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
     }
 } 
