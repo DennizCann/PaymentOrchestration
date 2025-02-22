@@ -3,9 +3,12 @@ package com.denizcan.paymentorchestration.service;
 import com.denizcan.paymentorchestration.model.Payment;
 import com.denizcan.paymentorchestration.repository.PaymentRepository;
 import com.denizcan.paymentorchestration.exception.PaymentNotFoundException;
+import com.denizcan.paymentorchestration.exception.PaymentValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Arrays;
 
 @Service
 public class PaymentService {
@@ -19,8 +22,25 @@ public class PaymentService {
     
     // Create
     public Payment createPayment(Payment payment) {
+        validatePayment(payment);
         payment.setStatus("PENDING");
         return paymentRepository.save(payment);
+    }
+
+    private void validatePayment(Payment payment) {
+        if (payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new PaymentValidationException("Ödeme tutarı sıfırdan büyük olmalıdır");
+        }
+        
+        if (payment.getCurrency() == null || payment.getCurrency().trim().isEmpty()) {
+            throw new PaymentValidationException("Para birimi belirtilmelidir");
+        }
+        
+        // Desteklenen para birimlerini kontrol et
+        List<String> supportedCurrencies = Arrays.asList("TRY", "USD", "EUR");
+        if (!supportedCurrencies.contains(payment.getCurrency())) {
+            throw new PaymentValidationException("Desteklenmeyen para birimi: " + payment.getCurrency());
+        }
     }
 
     // Read

@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import com.denizcan.paymentorchestration.exception.ErrorResponse;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -41,5 +40,15 @@ public class GlobalExceptionHandler {
             LocalDateTime.now()
         );
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(PaymentValidationException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentValidationException(PaymentValidationException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 } 
